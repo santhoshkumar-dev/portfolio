@@ -1,21 +1,35 @@
-import { About, Blog, Gallery, Home, Newsletter, Person, Social, Work } from "@/types";
+import type {
+  About,
+  Blog,
+  Gallery,
+  Home,
+  Newsletter,
+  Person,
+  Social,
+  Work,
+} from "@/types";
 import { Line, Row, Text } from "@once-ui-system/core";
 
 const person: Person = {
-  firstName: "Selene",
-  lastName: "Yu",
-  name: `Selene Yu`,
-  role: "Design Engineer",
-  avatar: "/images/avatar.jpg",
-  email: "example@gmail.com",
-  location: "Asia/Jakarta", // Expecting the IANA time zone identifier, e.g., 'Europe/Vienna'
-  languages: ["English", "Bahasa"], // optional: Leave the array empty if you don't want to display languages
+  firstName: "Santhosh",
+  lastName: "Kumar",
+  name: "Santhosh Kumar",
+  role: "Full-Stack Software Engineer",
+  avatar: "/images/avatar.png",
+  email: "santhoshkumar.devmail@gmail.com",
+  location: "Asia/Kolkata", // Expecting the IANA time zone identifier, e.g., 'Europe/Vienna'
+  languages: ["English"], // optional: Leave the array empty if you don't want to display languages
 };
 
 const newsletter: Newsletter = {
   display: true,
   title: <>Subscribe to {person.firstName}'s Newsletter</>,
-  description: <>My weekly newsletter about creativity and engineering</>,
+  description: (
+    <>
+      Thoughts on full-stack engineering, cloud architecture, and production
+      systems
+    </>
+  ),
 };
 
 const social: Social = [
@@ -25,25 +39,13 @@ const social: Social = [
   {
     name: "GitHub",
     icon: "github",
-    link: "https://github.com/once-ui-system",
+    link: "https://github.com/iamsanthosh2203",
     essential: true,
   },
   {
     name: "LinkedIn",
     icon: "linkedin",
-    link: "https://www.linkedin.com/company/once-ui/",
-    essential: true,
-  },
-  {
-    name: "Instagram",
-    icon: "instagram",
-    link: "https://www.instagram.com/once_ui/",
-    essential: false,
-  },
-  {
-    name: "Threads",
-    icon: "threads",
-    link: "https://www.threads.com/@once_ui",
+    link: "https://www.linkedin.com/in/iamsanthosh2203/",
     essential: true,
   },
   {
@@ -60,24 +62,26 @@ const home: Home = {
   label: "Home",
   title: `${person.name}'s Portfolio`,
   description: `Portfolio website showcasing my work as a ${person.role}`,
-  headline: <>Building bridges between design and code</>,
+  headline: <>Scaling systems from zero to production</>,
   featured: {
     display: true,
     title: (
       <Row gap="12" vertical="center">
-        <strong className="ml-4">Once UI</strong>{" "}
+        <strong className="ml-4">Educational Hub</strong>{" "}
         <Line background="brand-alpha-strong" vert height="20" />
         <Text marginRight="4" onBackground="brand-medium">
           Featured work
         </Text>
       </Row>
     ),
-    href: "/work/building-once-ui-a-customizable-design-system",
+    href: "/work/educational-hub-full-stack-platform",
   },
   subline: (
     <>
-    I'm Selene, a design engineer at <Text as="span" size="xl" weight="strong">ONCE UI</Text>, where I craft intuitive <br /> user experiences. After hours, I build my own projects.
-</>
+      Full-stack engineer building production systems at scale. I own the entire
+      stack—frontend, backend, <br /> DevOps, and cloud. Built platforms
+      handling 50k+ daily transactions, reduced cloud costs by 80%.
+    </>
   ),
 };
 
@@ -102,9 +106,11 @@ const about: About = {
     title: "Introduction",
     description: (
       <>
-        Selene is a Jakarta-based design engineer with a passion for transforming complex challenges
-        into simple, elegant design solutions. Her work spans digital interfaces, interactive
-        experiences, and the convergence of design and technology.
+        Full-stack software engineer with experience building scalable,
+        cloud-based applications and automation-driven systems. Strong ownership
+        mindset across frontend, backend, DevOps, cloud infrastructure, and
+        distributed systems. Currently focused on building production-grade
+        platforms at early-stage startups with real scale and impact.
       </>
     ),
   },
@@ -113,120 +119,188 @@ const about: About = {
     title: "Work Experience",
     experiences: [
       {
-        company: "FLY",
-        timeframe: "2022 - Present",
-        role: "Senior Design Engineer",
+        company: "Recipto Pvt Ltd",
+        timeframe: "2023 - Present",
+        role: "Software Engineer",
         achievements: [
-          <>
-            Redesigned the UI/UX for the FLY platform, resulting in a 20% increase in user
-            engagement and 30% faster load times.
-          </>,
-          <>
-            Spearheaded the integration of AI tools into design workflows, enabling designers to
-            iterate 50% faster.
-          </>,
+          <span key="recipto-1">
+            Owned end-to-end engineering of production platform at early-stage
+            startup. Built full-stack application handling 50,000+ daily
+            transactions.
+          </span>,
+          <span key="recipto-2">
+            Designed and maintained multi-cloud infrastructure across AWS, GCP,
+            and Azure. Led complete AWS to GCP migration, improving reliability
+            and reducing infrastructure costs by ~80%.
+          </span>,
+          <span key="recipto-3">
+            Built Kafka-based ML document processing pipeline with Python,
+            Selenium, and OCR integration for automated data extraction.
+            Processes 50,000+ receipts monthly.
+          </span>,
+          <span key="recipto-4">
+            Developed React + Next.js frontend and Node.js + GraphQL backend
+            services for core platform functionality.
+          </span>,
         ],
-        images: [
-          // optional: leave the array empty if you don't want to display images
-          {
-            src: "/images/projects/project-01/cover-01.jpg",
-            alt: "Once UI Project",
-            width: 16,
-            height: 9,
-          },
-        ],
+        images: [],
       },
       {
-        company: "Creativ3",
-        timeframe: "2018 - 2022",
-        role: "Lead Designer",
+        company: "MidLead",
+        timeframe: "2021 - 2023",
+        role: "Software Engineer",
         achievements: [
-          <>
-            Developed a design system that unified the brand across multiple platforms, improving
-            design consistency by 40%.
-          </>,
-          <>
-            Led a cross-functional team to launch a new product line, contributing to a 15% increase
-            in overall company revenue.
-          </>,
+          <span key="midlead-1">
+            Built full-stack web applications using Next.js, Node.js, and
+            MongoDB in a fast-paced Web3 startup environment.
+          </span>,
+          <span key="midlead-2">
+            Developed reusable UI component library and internal dashboards for
+            team collaboration.
+          </span>,
+          <span key="midlead-3">
+            Integrated third-party APIs, authentication flows, and payment
+            systems with emphasis on production reliability.
+          </span>,
+          <span key="midlead-4">
+            Worked in startup environment requiring rapid iteration and
+            real-time feature deployment.
+          </span>,
         ],
         images: [],
       },
     ],
   },
   studies: {
-    display: true, // set to false to hide this section
+    display: false, // set to false to hide this section
     title: "Studies",
     institutions: [
       {
-        name: "University of Jakarta",
-        description: <>Studied software engineering.</>,
-      },
-      {
-        name: "Build the Future",
-        description: <>Studied online marketing and personal branding.</>,
+        name: "University of Delhi",
+        description: <>Studied computer science and software engineering.</>,
       },
     ],
   },
   technical: {
     display: true, // set to false to hide this section
-    title: "Technical skills",
+    title: "Technical Skills",
     skills: [
       {
-        title: "Figma",
+        title: "Frontend",
         description: (
-          <>Able to prototype in Figma with Once UI with unnatural speed.</>
+          <>
+            Building responsive, performant, and accessible user interfaces
+            using modern React and Next.js patterns. Strong focus on component
+            architecture, UX polish, and client-side performance.
+          </>
         ),
         tags: [
-          {
-            name: "Figma",
-            icon: "figma",
-          },
+          { name: "Next.js", icon: "nextjs" },
+          { name: "React", icon: "react" },
+          { name: "TypeScript", icon: "typescript" },
+          { name: "Tailwind CSS", icon: "tailwindcss" },
+          { name: "shadcn/ui", icon: "shadcnui" },
+          { name: "Hero UI", icon: "heroui" },
+          { name: "React Query", icon: "reactquery" },
+          { name: "Zustand", icon: "zustand" },
+          { name: "Zod", icon: "zod" },
+          { name: "Framer Motion", icon: "framermotion" },
+          { name: "GSAP", icon: "gsap" },
         ],
-        // optional: leave the array empty if you don't want to display images
-        images: [
-          {
-            src: "/images/projects/project-01/cover-02.jpg",
-            alt: "Project image",
-            width: 16,
-            height: 9,
-          },
-          {
-            src: "/images/projects/project-01/cover-03.jpg",
-            alt: "Project image",
-            width: 16,
-            height: 9,
-          },
-        ],
+        images: [],
       },
+
       {
-        title: "Next.js",
+        title: "Backend & APIs",
         description: (
-          <>Building next gen apps with Next.js + Once UI + Supabase.</>
+          <>
+            Designing scalable backend systems and APIs with Node.js, Express,
+            and GraphQL. Experience building real-time and event-driven
+            services.
+          </>
         ),
         tags: [
-          {
-            name: "JavaScript",
-            icon: "javascript",
-          },
-          {
-            name: "Next.js",
-            icon: "nextjs",
-          },
-          {
-            name: "Supabase",
-            icon: "supabase",
-          },
+          { name: "Node.js", icon: "nodejs" },
+          { name: "Express", icon: "express" },
+          { name: "GraphQL", icon: "graphql" },
+          { name: "WebSockets", icon: "realtime" },
+          { name: "Socket.IO", icon: "socketio" },
         ],
-        // optional: leave the array empty if you don't want to display images
-        images: [
-          {
-            src: "/images/projects/project-01/cover-04.jpg",
-            alt: "Project image",
-            width: 16,
-            height: 9,
-          },
+        images: [],
+      },
+
+      {
+        title: "Data, Caching & Messaging",
+        description: (
+          <>
+            Working with databases, caching layers, and message queues to build
+            reliable, high-throughput distributed systems.
+          </>
+        ),
+        tags: [
+          { name: "MongoDB", icon: "mongodb" },
+          { name: "Redis", icon: "redis" },
+          { name: "Apache Kafka", icon: "kafka" },
         ],
+        images: [],
+      },
+
+      {
+        title: "Cloud & Infrastructure",
+        description: (
+          <>
+            Deploying and operating applications across multiple cloud providers
+            using managed compute, storage, and networking services.
+          </>
+        ),
+        tags: [
+          { name: "AWS", icon: "aws" },
+          { name: "Google Cloud", icon: "gcp" },
+          { name: "Azure", icon: "azure" },
+        ],
+        images: [],
+      },
+
+      {
+        title: "DevOps & Deployment",
+        description: (
+          <>
+            Containerized deployments, CI/CD automation, and production
+            infrastructure management with a focus on reliability and
+            scalability.
+          </>
+        ),
+        tags: [
+          { name: "Docker", icon: "docker" },
+          { name: "Kubernetes", icon: "kubernetes" },
+          { name: "Nginx", icon: "nginx" },
+          { name: "GitHub Actions", icon: "githubactions" },
+          { name: "PM2", icon: "pm2" },
+          { name: "Coolify", icon: "coolify" },
+        ],
+        images: [],
+      },
+
+      {
+        title: "Automation, AI & Tooling",
+        description: (
+          <>
+            Automation, testing, and AI integrations to improve development
+            velocity, reliability, and system observability.
+          </>
+        ),
+        tags: [
+          { name: "Python", icon: "python" },
+          { name: "Selenium", icon: "selenium" },
+          { name: "Puppeteer", icon: "puppeteer" },
+          { name: "Jest", icon: "jest" },
+          { name: "k6", icon: "k6" },
+          { name: "FFmpeg", icon: "ffmpeg" },
+          { name: "Postman", icon: "postman" },
+          { name: "Git", icon: "git" },
+          { name: "Jupyter", icon: "jupyter" },
+        ],
+        images: [],
       },
     ],
   },
@@ -235,7 +309,7 @@ const about: About = {
 const blog: Blog = {
   path: "/blog",
   label: "Blog",
-  title: "Writing about design and tech...",
+  title: "Writing about full-stack engineering...",
   description: `Read what ${person.name} has been up to recently`,
   // Create new blog posts by adding a new .mdx file to app/blog/posts
   // All posts will be listed on the /blog route
@@ -245,7 +319,7 @@ const work: Work = {
   path: "/work",
   label: "Work",
   title: `Projects – ${person.name}`,
-  description: `Design and dev projects by ${person.name}`,
+  description: `Full-stack projects by ${person.name}`,
   // Create new project pages by adding a new .mdx file to app/blog/posts
   // All projects will be listed on the /home and /work routes
 };

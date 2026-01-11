@@ -22,6 +22,10 @@ const routes: RoutesConfig = {
   "/work": true,
   "/blog": true,
   "/gallery": true,
+  "/admin": true,
+  "/admin/login": true,
+  "/admin/blogs": true,
+  "/admin/projects": true,
 };
 
 const display: DisplayConfig = {

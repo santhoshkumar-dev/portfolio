@@ -1,0 +1,64 @@
+---
+title: "Lriczy: Real-Time Lyrics"
+publishedAt: "2023-08-20"
+summary: "Open-source real-time lyrics synchronization platform. Browser extension for web players + Electron desktop app. Uses WebSockets for live sync across devices."
+images:
+  - "/images/projects/project-01/cover-02.jpg"
+team:
+  - name: "Santhosh Kumar"
+    role: "Full-Stack Engineer"
+    avatar: "/images/avatar.png"
+---
+
+## Overview
+
+Lriczy is an open-source project that synchronizes song lyrics in real-time across multiple platforms—web browsers, desktop applications, and mobile devices. Built with a focus on low-latency synchronization and a seamless user experience.
+
+## Key Features
+
+- **Real-Time Sync**: WebSocket-based synchronization ensures lyrics stay in perfect sync across all connected devices with minimal latency (<100ms).
+- **Browser Extension**: Works with Spotify, YouTube Music, Apple Music, and other music streaming services. Detects playing songs and fetches lyrics automatically.
+- **Electron Desktop App**: Standalone desktop application for local music playback with lyrics display.
+- **Crowd-Sourced Lyrics Database**: Community contributions for accurate lyrics and timings. Quality control through voting system.
+- **Offline Support**: Downloaded lyrics and timings work without internet connection.
+- **Multiple Language Support**: Lyrics in 50+ languages from community contributors.
+
+## Architecture
+
+**Frontend**: React for browser extension UI and Electron app. Real-time state management using Redux for synchronization state.
+
+**Backend**: Node.js + Express server managing WebSocket connections. GraphQL API for fetching lyrics and metadata.
+
+**Real-Time Communication**: Socket.io for bidirectional real-time communication. Implemented message queuing to handle thousands of concurrent connections.
+
+**Database**: MongoDB for lyrics storage and metadata. Elasticsearch for full-text lyrics search with fast response times.
+
+**Infrastructure**: Deployed on AWS EC2 with load balancing. Redis for WebSocket session management and message caching.
+
+## Technical Achievements
+
+- Handled 10,000+ concurrent WebSocket connections with sub-50ms latency for lyric sync.
+- Implemented progressive web app features for offline-first experience.
+- Built automated lyrics scraper and validation pipeline to maintain database quality.
+- Developed conflict resolution strategy for simultaneous lyric edits from multiple users.
+- Achieved 99.5% uptime with automated health checks and failover mechanisms.
+
+## Challenges & Solutions
+
+**Challenge**: Maintaining sync across devices with varying network conditions and playback speeds.
+**Solution**: Implemented time-based synchronization with drift detection and automatic correction. Uses NTP (Network Time Protocol) for clock synchronization across clients.
+
+**Challenge**: Scaling WebSocket connections to thousands of concurrent users.
+**Solution**: Built horizontal scaling with sticky sessions using Redis. Load balanced WebSocket connections across multiple servers.
+
+**Challenge**: Handling lyrics corrections and updates from community without downtime.
+**Solution**: Implemented eventual consistency model with version control for lyrics. Updates propagate to clients without requiring refresh.
+
+## Community Impact
+
+- 50,000+ GitHub stars and active community contributions
+- Integrated with 15+ music streaming services
+- Translated to 30+ languages by community members
+- Monthly active users: 100,000+
+
+The project demonstrates the ability to build scalable, real-time systems while fostering an engaged open-source community.

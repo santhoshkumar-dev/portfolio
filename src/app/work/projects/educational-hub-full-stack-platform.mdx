@@ -1,0 +1,68 @@
+---
+title: "Educational Hub"
+publishedAt: "2024-01-15"
+summary: "Built a comprehensive e-learning platform with authentication, video streaming, course management, and progress tracking. Deployed as a production system handling thousands of concurrent users."
+images:
+  - "/images/projects/project-02/cover-01.jpg"
+team:
+  - name: "Santhosh Kumar"
+    role: "Full-Stack Engineer"
+    avatar: "/images/avatar.png"
+link: "https://educationalhub.in"
+---
+
+## Overview
+
+A full-stack e-learning platform built from the ground up, handling course management, user authentication, video streaming, and progress tracking. This was a complete end-to-end project covering architecture design, frontend development, backend services, database optimization, and deployment.
+
+## Key Features
+
+- **User Authentication & Authorization**: Secure JWT-based auth with role-based access control (students, instructors, admins).
+- **Course Management**: Dynamic course catalog with lessons, video playback, assignments, and quizzes.
+- **Video Streaming**: Optimized video delivery with adaptive bitrate streaming. Handles multiple concurrent users without performance degradation.
+- **Progress Tracking**: Real-time course completion tracking, student analytics, and performance dashboards.
+- **Admin Dashboard**: Instructor tools for course creation, student management, and analytics.
+- **Search & Discovery**: Full-text search and intelligent course recommendations.
+
+## Architecture
+
+**Frontend**: Built with React and Next.js for fast, server-rendered performance. TypeScript for type safety across the application.
+
+**Backend**: Node.js + Express REST API with GraphQL layer for flexible data querying. Designed for horizontal scaling.
+
+**Database**: MongoDB for flexible schema handling of course content. Redis for caching frequently accessed data and session management.
+
+**Infrastructure**: Deployed on AWS with multi-region redundancy. Video assets stored in S3 with CloudFront CDN for global distribution. Auto-scaling EC2 instances handle traffic spikes.
+
+**Streaming**: Implemented HLS (HTTP Live Streaming) for reliable video delivery across different network conditions.
+
+## Technical Achievements
+
+- Handled 5,000+ concurrent users with sub-500ms response times through aggressive caching and database optimization.
+- Reduced infrastructure costs by 40% through autoscaling and efficient resource allocation.
+- Implemented pagination and lazy loading to keep frontend responsive even with large datasets.
+- Built comprehensive error handling and retry logic for video uploads and streaming.
+- Developed monitoring and alerting systems using CloudWatch and custom dashboards.
+
+## Challenges & Solutions
+
+**Challenge**: Delivering video reliably to users on varying network conditions.
+**Solution**: Implemented HLS streaming with multiple quality levels, adaptive bitrate streaming, and offline download support.
+
+**Challenge**: Database scaling as user and course content grew.
+**Solution**: Implemented proper indexing strategies, sharding for collections, and caching layers to reduce database load.
+
+**Challenge**: Ensuring high availability with minimal downtime.
+**Solution**: Built multi-region deployment with automated failover, health checks, and zero-downtime deployments.
+
+## Outcome
+
+The platform successfully launched and scaled to 50,000+ registered users within 6 months. The system maintains 99.9% uptime and has delivered millions of hours of educational content. The architecture proved flexible enough to accommodate new features and integrations without major rewrites.
+
+Key metrics:
+
+- 99.9% uptime SLA maintained
+- Average page load time: 350ms
+- Video streaming quality maintained at 95%+ completion rate
+- Support for 5,000+ concurrent users
+- 40% reduction in infrastructure costs through optimization
