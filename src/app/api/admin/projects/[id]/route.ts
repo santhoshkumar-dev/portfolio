@@ -8,7 +8,7 @@ import { generateUniqueSlug } from "@/utils/slugify";
 // GET: Get single project by ID (admin only)
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = verifyAdminToken(request);
@@ -16,9 +16,11 @@ export async function GET(
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await context.params;
+
     await connectDB();
 
-    const project = await Project.findById(params.id);
+    const project = await Project.findById(id);
 
     if (!project) {
       return NextResponse.json(
@@ -40,7 +42,7 @@ export async function GET(
 // PUT: Update project by ID (admin only)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = verifyAdminToken(request);
@@ -48,13 +50,15 @@ export async function PUT(
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await context.params;
+
     await connectDB();
 
     const body = await request.json();
     const { title, summary, content, images, team, published, publishedAt } =
       body;
 
-    const project = await Project.findById(params.id);
+    const project = await Project.findById(id);
 
     if (!project) {
       return NextResponse.json(
@@ -66,11 +70,11 @@ export async function PUT(
     // Update slug if title changed
     let slug = project.slug;
     if (title && title !== project.title) {
-      slug = await generateUniqueSlug(title, Project, params.id);
+      slug = await generateUniqueSlug(title, Project, id);
     }
 
     const updatedProject = await Project.findByIdAndUpdate(
-      params.id,
+      id,
       {
         title: title || project.title,
         slug,
@@ -101,7 +105,7 @@ export async function PUT(
 // DELETE: Delete project by ID (admin only)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = verifyAdminToken(request);
@@ -109,9 +113,11 @@ export async function DELETE(
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await context.params;
+
     await connectDB();
 
-    const project = await Project.findByIdAndDelete(params.id);
+    const project = await Project.findByIdAndDelete(id);
 
     if (!project) {
       return NextResponse.json(

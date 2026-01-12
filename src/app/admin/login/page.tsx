@@ -50,7 +50,7 @@ export default function AdminLogin() {
       fillHeight
       horizontal="center"
       vertical="center"
-      minHeight="100vh"
+      style={{ minHeight: "100vh" }}
       paddingY="l"
     >
       <Column

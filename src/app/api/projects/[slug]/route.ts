@@ -1,17 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import Project from "@/models/Project";
 
 // GET: Get single published project by slug (public)
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  context: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const { slug } = await context.params;
+
     await connectDB();
 
     const project = await Project.findOne({
-      slug: params.slug,
+      slug: slug,
       published: true,
     }).select("-__v");
 

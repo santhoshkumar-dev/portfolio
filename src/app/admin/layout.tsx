@@ -57,7 +57,7 @@ export default function AdminLayout({
         fillHeight
         horizontal="center"
         vertical="center"
-        minHeight="100vh"
+        style={{ minHeight: "100vh" }}
       >
         <Spinner />
       </Column>
@@ -74,7 +74,7 @@ export default function AdminLayout({
   }
 
   return (
-    <Column fillWidth fillHeight minHeight="100vh">
+    <Column fillWidth fillHeight style={{ minHeight: "100vh" }}>
       {/* Admin Navigation */}
       <Row
         fillWidth
