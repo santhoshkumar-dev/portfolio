@@ -18,7 +18,7 @@ const person: Person = {
   avatar: "/images/avatar.png",
   email: "santhoshkumar.devmail@gmail.com",
   location: "Asia/Kolkata", // Expecting the IANA time zone identifier, e.g., 'Europe/Vienna'
-  languages: ["English"], // optional: Leave the array empty if you don't want to display languages
+  languages: ["English", "Tamil", "Binary Language"], // optional: Leave the array empty if you don't want to display languages
 };
 
 const newsletter: Newsletter = {
@@ -99,7 +99,7 @@ const about: About = {
   },
   calendar: {
     display: true,
-    link: "https://cal.com",
+    link: "https://cal.com/santhosh-kumar-dev",
   },
   intro: {
     display: true,
