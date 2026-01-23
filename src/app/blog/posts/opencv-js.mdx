@@ -1,0 +1,1326 @@
+---
+title: "OpenCV.js in Next.js: Complete Guide to Browser-Based Computer Vision"
+subtitle: "Master real-time image processing and computer vision using @techstark/opencv-js in your Next.js applications"
+summary: "A comprehensive guide to integrating OpenCV.js with Next.js, covering installation, image processing, edge detection, contour extraction, color manipulation, and building production-ready computer vision applications that run entirely in the browser."
+image: "/images/blogs/opencv-js/opencv-js.png"
+publishedAt: "2026-01-23"
+tag: "Computer Vision"
+---
+
+## Introduction
+
+Computer vision has traditionally been the domain of server-side processing, requiring powerful GPUs and complex infrastructure. But what if you could perform real-time image processing, edge detection, and object recognition directly in the browser? Enter **OpenCV.js** — the JavaScript port of the legendary OpenCV library.
+
+In this comprehensive guide, we'll explore how to integrate `@techstark/opencv-js` into your Next.js applications, enabling you to build powerful, client-side computer vision features without any server-side dependencies.
+
+## What is OpenCV.js?
+
+OpenCV.js is a JavaScript binding for a subset of OpenCV functions, compiled to WebAssembly (WASM) for near-native performance in the browser. The `@techstark/opencv-js` npm package provides a convenient, TypeScript-friendly wrapper around OpenCV.js, making it easy to integrate into modern React and Next.js applications.
+
+### Key Features
+
+- **Client-side Processing**: All computations happen in the browser
+- **WebAssembly Performance**: Near-native speed for image operations
+- **Rich API**: Access to 100+ OpenCV functions
+- **TypeScript Support**: Full type definitions included
+- **No Server Required**: Perfect for privacy-conscious applications
+- **Cross-platform**: Works on any modern browser
+
+### What You Can Build
+
+| Application        | Description                            |
+| ------------------ | -------------------------------------- |
+| Image Editors      | Filters, transformations, enhancements |
+| Document Scanners  | Edge detection, perspective correction |
+| AR Filters         | Real-time face and feature detection   |
+| Paint Visualizers  | Region segmentation, color replacement |
+| QR/Barcode Readers | Pattern recognition and decoding       |
+| Object Trackers    | Motion detection, contour tracking     |
+
+## Installation
+
+### Setting Up Next.js Project
+
+```bash
+# Create a new Next.js project (if starting fresh)
+npx create-next-app@latest opencv-demo --typescript --tailwind --app
+
+cd opencv-demo
+
+# Install @techstark/opencv-js
+npm install @techstark/opencv-js
+```
+
+### TypeScript Configuration
+
+Add OpenCV type declarations by creating a types file:
+
+```typescript
+// types/opencv.d.ts
+declare module "@techstark/opencv-js" {
+  const cv: typeof import("opencv-ts");
+  export default cv;
+}
+```
+
+## Loading OpenCV.js in Next.js
+
+The most critical aspect of using OpenCV.js in Next.js is handling the asynchronous loading of the WebAssembly module. Since Next.js uses server-side rendering, we need to ensure OpenCV loads only on the client side.
+
+### Method 1: Dynamic Import with useEffect
+
+```typescript
+// hooks/useOpenCV.ts
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+
+interface OpenCVInstance {
+  cv: any;
+  isLoaded: boolean;
+  error: string | null;
+}
+
+export function useOpenCV(): OpenCVInstance {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const cvRef = useRef<any>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadOpenCV() {
+      try {
+        // Dynamic import for client-side only
+        const cv = await import("@techstark/opencv-js");
+
+        // Wait for WASM to be ready
+        if (cv.default && cv.default.onRuntimeInitialized !== undefined) {
+          cv.default.onRuntimeInitialized = () => {
+            if (mounted) {
+              cvRef.current = cv.default;
+              setIsLoaded(true);
+            }
+          };
+        } else {
+          // Already initialized
+          cvRef.current = cv.default;
+          if (mounted) setIsLoaded(true);
+        }
+      } catch (err) {
+        if (mounted) {
+          setError(
+            err instanceof Error ? err.message : "Failed to load OpenCV",
+          );
+        }
+      }
+    }
+
+    loadOpenCV();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  return { cv: cvRef.current, isLoaded, error };
+}
+```
+
+### Method 2: Context Provider Pattern
+
+For larger applications, use a context provider to share the OpenCV instance:
+
+```typescript
+// context/OpenCVContext.tsx
+'use client';
+
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+
+interface OpenCVContextType {
+  cv: any;
+  isLoaded: boolean;
+  error: string | null;
+}
+
+const OpenCVContext = createContext<OpenCVContextType>({
+  cv: null,
+  isLoaded: false,
+  error: null,
+});
+
+export function OpenCVProvider({ children }: { children: ReactNode }) {
+  const [cv, setCv] = useState<any>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function initOpenCV() {
+      try {
+        const opencv = await import('@techstark/opencv-js');
+
+        // Handle WASM initialization
+        const cvInstance = opencv.default;
+
+        if (cvInstance.Mat) {
+          // Already ready
+          setCv(cvInstance);
+          setIsLoaded(true);
+        } else {
+          // Wait for initialization
+          cvInstance.onRuntimeInitialized = () => {
+            setCv(cvInstance);
+            setIsLoaded(true);
+          };
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'OpenCV load failed');
+      }
+    }
+
+    initOpenCV();
+  }, []);
+
+  return (
+    <OpenCVContext.Provider value={{ cv, isLoaded, error }}>
+      {children}
+    </OpenCVContext.Provider>
+  );
+}
+
+export const useOpenCVContext = () => useContext(OpenCVContext);
+```
+
+Usage in your layout:
+
+```typescript
+// app/layout.tsx
+import { OpenCVProvider } from '@/context/OpenCVContext';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <OpenCVProvider>
+          {children}
+        </OpenCVProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+## Core Concepts
+
+### Understanding Mat Objects
+
+`Mat` (Matrix) is the fundamental data structure in OpenCV for storing images:
+
+```typescript
+// Creating Mat objects
+const mat = new cv.Mat(); // Empty matrix
+const mat2 = new cv.Mat(rows, cols, cv.CV_8UC4); // 4-channel RGBA
+const mat3 = cv.Mat.zeros(100, 100, cv.CV_8UC1); // Black image
+const mat4 = cv.Mat.ones(100, 100, cv.CV_8UC1); // White image
+
+// IMPORTANT: Always delete Mat objects to prevent memory leaks!
+mat.delete();
+mat2.delete();
+mat3.delete();
+mat4.delete();
+```
+
+### Image Types (CV Types)
+
+| Type       | Description                      | Use Case                     |
+| ---------- | -------------------------------- | ---------------------------- |
+| `CV_8UC1`  | 8-bit single channel (grayscale) | Edge detection, masks        |
+| `CV_8UC3`  | 8-bit 3 channels (RGB)           | Color images                 |
+| `CV_8UC4`  | 8-bit 4 channels (RGBA)          | Web images with transparency |
+| `CV_32FC1` | 32-bit float single channel      | Mathematical operations      |
+
+### Loading Images from Canvas/HTML
+
+```typescript
+function imageToMat(imageElement: HTMLImageElement): cv.Mat {
+  // Create a canvas to get image data
+  const canvas = document.createElement("canvas");
+  canvas.width = imageElement.width;
+  canvas.height = imageElement.height;
+
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(imageElement, 0, 0);
+
+  // Get ImageData and convert to Mat
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const mat = cv.matFromImageData(imageData);
+
+  return mat; // Remember to delete when done!
+}
+
+function matToCanvas(mat: cv.Mat, canvas: HTMLCanvasElement): void {
+  cv.imshow(canvas, mat);
+}
+```
+
+## Basic Image Processing
+
+### Grayscale Conversion
+
+```typescript
+function convertToGrayscale(src: cv.Mat): cv.Mat {
+  const gray = new cv.Mat();
+
+  // Convert RGBA to Grayscale
+  cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+
+  return gray;
+}
+```
+
+### Gaussian Blur
+
+```typescript
+function applyGaussianBlur(src: cv.Mat, kernelSize: number = 5): cv.Mat {
+  const blurred = new cv.Mat();
+  const ksize = new cv.Size(kernelSize, kernelSize);
+
+  cv.GaussianBlur(src, blurred, ksize, 0, 0, cv.BORDER_DEFAULT);
+
+  return blurred;
+}
+```
+
+### Image Resize
+
+```typescript
+function resizeImage(src: cv.Mat, width: number, height: number): cv.Mat {
+  const resized = new cv.Mat();
+  const dsize = new cv.Size(width, height);
+
+  cv.resize(src, resized, dsize, 0, 0, cv.INTER_LINEAR);
+
+  return resized;
+}
+```
+
+### Brightness and Contrast
+
+```typescript
+function adjustBrightnessContrast(
+  src: cv.Mat,
+  brightness: number = 0,
+  contrast: number = 1,
+): cv.Mat {
+  const adjusted = new cv.Mat();
+
+  // alpha = contrast, beta = brightness
+  src.convertTo(adjusted, -1, contrast, brightness);
+
+  return adjusted;
+}
+```
+
+## Edge Detection
+
+Edge detection is one of the most common computer vision tasks. Let's explore multiple methods:
+
+### Canny Edge Detection
+
+```typescript
+function cannyEdgeDetection(
+  src: cv.Mat,
+  lowThreshold: number = 50,
+  highThreshold: number = 150,
+): cv.Mat {
+  const gray = new cv.Mat();
+  const edges = new cv.Mat();
+
+  // Convert to grayscale first
+  cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+
+  // Apply Gaussian blur to reduce noise
+  const blurred = new cv.Mat();
+  cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 1.4);
+
+  // Detect edges
+  cv.Canny(blurred, edges, lowThreshold, highThreshold);
+
+  // Cleanup intermediate Mats
+  gray.delete();
+  blurred.delete();
+
+  return edges;
+}
+```
+
+### Sobel Edge Detection
+
+```typescript
+function sobelEdgeDetection(src: cv.Mat): cv.Mat {
+  const gray = new cv.Mat();
+  const gradX = new cv.Mat();
+  const gradY = new cv.Mat();
+  const absGradX = new cv.Mat();
+  const absGradY = new cv.Mat();
+  const edges = new cv.Mat();
+
+  cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+
+  // Gradient in X direction
+  cv.Sobel(gray, gradX, cv.CV_16S, 1, 0, 3);
+  cv.convertScaleAbs(gradX, absGradX);
+
+  // Gradient in Y direction
+  cv.Sobel(gray, gradY, cv.CV_16S, 0, 1, 3);
+  cv.convertScaleAbs(gradY, absGradY);
+
+  // Combine gradients
+  cv.addWeighted(absGradX, 0.5, absGradY, 0.5, 0, edges);
+
+  // Cleanup
+  gray.delete();
+  gradX.delete();
+  gradY.delete();
+  absGradX.delete();
+  absGradY.delete();
+
+  return edges;
+}
+```
+
+### Laplacian Edge Detection
+
+```typescript
+function laplacianEdgeDetection(src: cv.Mat): cv.Mat {
+  const gray = new cv.Mat();
+  const laplacian = new cv.Mat();
+  const edges = new cv.Mat();
+
+  cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+  cv.Laplacian(gray, laplacian, cv.CV_16S, 3);
+  cv.convertScaleAbs(laplacian, edges);
+
+  gray.delete();
+  laplacian.delete();
+
+  return edges;
+}
+```
+
+## Contour Detection and Analysis
+
+Contours are curves joining continuous points along a boundary. They're essential for shape detection and region analysis.
+
+### Basic Contour Detection
+
+```typescript
+interface ContourData {
+  contours: cv.MatVector;
+  hierarchy: cv.Mat;
+}
+
+function findContours(edgeImage: cv.Mat): ContourData {
+  const contours = new cv.MatVector();
+  const hierarchy = new cv.Mat();
+
+  cv.findContours(
+    edgeImage,
+    contours,
+    hierarchy,
+    cv.RETR_EXTERNAL, // Retrieval mode
+    cv.CHAIN_APPROX_SIMPLE, // Approximation method
+  );
+
+  return { contours, hierarchy };
+}
+```
+
+### Contour Retrieval Modes
+
+| Mode            | Description                | Use Case                         |
+| --------------- | -------------------------- | -------------------------------- |
+| `RETR_EXTERNAL` | Only outermost contours    | Simple shape detection           |
+| `RETR_LIST`     | All contours, no hierarchy | When parent-child doesn't matter |
+| `RETR_CCOMP`    | Two-level hierarchy        | Objects with holes               |
+| `RETR_TREE`     | Full hierarchy tree        | Complex nested structures        |
+
+### Drawing Contours
+
+```typescript
+function drawContours(
+  src: cv.Mat,
+  contours: cv.MatVector,
+  color: cv.Scalar = new cv.Scalar(0, 255, 0, 255),
+): cv.Mat {
+  const output = src.clone();
+
+  // Draw all contours
+  cv.drawContours(
+    output,
+    contours,
+    -1, // -1 means draw all contours
+    color, // Color (BGR format)
+    2, // Thickness
+    cv.LINE_8, // Line type
+  );
+
+  return output;
+}
+```
+
+### Contour Properties
+
+```typescript
+interface ContourProperties {
+  area: number;
+  perimeter: number;
+  boundingRect: { x: number; y: number; width: number; height: number };
+  centroid: { x: number; y: number };
+}
+
+function analyzeContour(contour: cv.Mat): ContourProperties {
+  // Area
+  const area = cv.contourArea(contour);
+
+  // Perimeter (arc length)
+  const perimeter = cv.arcLength(contour, true);
+
+  // Bounding rectangle
+  const rect = cv.boundingRect(contour);
+
+  // Centroid using moments
+  const moments = cv.moments(contour);
+  const centroid = {
+    x: moments.m10 / moments.m00,
+    y: moments.m01 / moments.m00,
+  };
+
+  return {
+    area,
+    perimeter,
+    boundingRect: rect,
+    centroid,
+  };
+}
+```
+
+## Color Space Manipulation
+
+### Converting Between Color Spaces
+
+```typescript
+// RGB to HSV
+function rgbToHsv(src: cv.Mat): cv.Mat {
+  const hsv = new cv.Mat();
+  cv.cvtColor(src, hsv, cv.COLOR_RGBA2RGB);
+
+  const hsvResult = new cv.Mat();
+  cv.cvtColor(hsv, hsvResult, cv.COLOR_RGB2HSV);
+
+  hsv.delete();
+  return hsvResult;
+}
+
+// RGB to LAB
+function rgbToLab(src: cv.Mat): cv.Mat {
+  const rgb = new cv.Mat();
+  cv.cvtColor(src, rgb, cv.COLOR_RGBA2RGB);
+
+  const lab = new cv.Mat();
+  cv.cvtColor(rgb, lab, cv.COLOR_RGB2Lab);
+
+  rgb.delete();
+  return lab;
+}
+```
+
+### Color-Based Object Detection
+
+```typescript
+function detectColorInRange(
+  src: cv.Mat,
+  lowerHSV: [number, number, number],
+  upperHSV: [number, number, number],
+): cv.Mat {
+  const hsv = new cv.Mat();
+  const mask = new cv.Mat();
+
+  // Convert to HSV
+  cv.cvtColor(src, hsv, cv.COLOR_RGBA2RGB);
+  const hsvFinal = new cv.Mat();
+  cv.cvtColor(hsv, hsvFinal, cv.COLOR_RGB2HSV);
+
+  // Create color range
+  const low = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), lowerHSV);
+  const high = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), upperHSV);
+
+  // Create mask for color range
+  cv.inRange(hsvFinal, low, high, mask);
+
+  // Cleanup
+  hsv.delete();
+  hsvFinal.delete();
+  low.delete();
+  high.delete();
+
+  return mask;
+}
+
+// Example: Detect red objects
+const redMask = detectColorInRange(
+  sourceImage,
+  [0, 100, 100], // Lower HSV bound
+  [10, 255, 255], // Upper HSV bound
+);
+```
+
+## Region-Based Segmentation
+
+### Flood Fill for Region Selection
+
+```typescript
+function floodFillRegion(
+  src: cv.Mat,
+  seedPoint: { x: number; y: number },
+  tolerance: number = 20,
+): cv.Mat {
+  const mask = cv.Mat.zeros(src.rows + 2, src.cols + 2, cv.CV_8UC1);
+  const result = src.clone();
+
+  const seedPt = new cv.Point(seedPoint.x, seedPoint.y);
+  const newColor = new cv.Scalar(255, 0, 0, 255);
+  const loDiff = new cv.Scalar(tolerance, tolerance, tolerance, 0);
+  const upDiff = new cv.Scalar(tolerance, tolerance, tolerance, 0);
+
+  cv.floodFill(
+    result,
+    mask,
+    seedPt,
+    newColor,
+    new cv.Rect(),
+    loDiff,
+    upDiff,
+    4 | (255 << 8) | cv.FLOODFILL_FIXED_RANGE,
+  );
+
+  mask.delete();
+  return result;
+}
+```
+
+### Watershed Segmentation
+
+```typescript
+function watershedSegmentation(src: cv.Mat): cv.Mat {
+  const gray = new cv.Mat();
+  const binary = new cv.Mat();
+  const markers = new cv.Mat();
+
+  // Convert to grayscale
+  cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+
+  // Threshold to binary
+  cv.threshold(gray, binary, 0, 255, cv.THRESH_BINARY_INV + cv.THRESH_OTSU);
+
+  // Morphological operations to remove noise
+  const kernel = cv.Mat.ones(3, 3, cv.CV_8U);
+  const opening = new cv.Mat();
+  cv.morphologyEx(
+    binary,
+    opening,
+    cv.MORPH_OPEN,
+    kernel,
+    new cv.Point(-1, -1),
+    2,
+  );
+
+  // Distance transform
+  const dist = new cv.Mat();
+  cv.distanceTransform(opening, dist, cv.DIST_L2, 5);
+  cv.normalize(dist, dist, 0, 1, cv.NORM_MINMAX);
+
+  // Threshold to get peaks
+  const peaks = new cv.Mat();
+  cv.threshold(dist, peaks, 0.5, 1, cv.THRESH_BINARY);
+
+  // Convert to CV_8U and find contours for markers
+  peaks.convertTo(markers, cv.CV_8U);
+  const contours = new cv.MatVector();
+  const hierarchy = new cv.Mat();
+  cv.findContours(
+    markers,
+    contours,
+    hierarchy,
+    cv.RETR_EXTERNAL,
+    cv.CHAIN_APPROX_SIMPLE,
+  );
+
+  // Create marker image
+  const markerImage = cv.Mat.zeros(src.rows, src.cols, cv.CV_32S);
+  for (let i = 0; i < contours.size(); i++) {
+    cv.drawContours(markerImage, contours, i, new cv.Scalar(i + 1), -1);
+  }
+
+  // Apply watershed
+  const rgb = new cv.Mat();
+  cv.cvtColor(src, rgb, cv.COLOR_RGBA2RGB);
+  cv.watershed(rgb, markerImage);
+
+  // Cleanup
+  gray.delete();
+  binary.delete();
+  kernel.delete();
+  opening.delete();
+  dist.delete();
+  peaks.delete();
+  markers.delete();
+  contours.delete();
+  hierarchy.delete();
+  rgb.delete();
+
+  return markerImage;
+}
+```
+
+## Complete Next.js Component Example
+
+Here's a full-featured image processing component:
+
+```typescript
+// components/ImageProcessor.tsx
+'use client';
+
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+
+interface ProcessingOptions {
+  grayscale: boolean;
+  blur: number;
+  edgeDetection: boolean;
+  contours: boolean;
+}
+
+export default function ImageProcessor() {
+  const [cv, setCv] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [options, setOptions] = useState<ProcessingOptions>({
+    grayscale: false,
+    blur: 0,
+    edgeDetection: false,
+    contours: false,
+  });
+
+  const inputCanvasRef = useRef<HTMLCanvasElement>(null);
+  const outputCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Load OpenCV
+  useEffect(() => {
+    async function loadCV() {
+      try {
+        const opencv = await import('@techstark/opencv-js');
+        const cvInstance = opencv.default;
+
+        if (cvInstance.Mat) {
+          setCv(cvInstance);
+          setIsLoading(false);
+        } else {
+          cvInstance.onRuntimeInitialized = () => {
+            setCv(cvInstance);
+            setIsLoading(false);
+          };
+        }
+      } catch (error) {
+        console.error('Failed to load OpenCV:', error);
+      }
+    }
+    loadCV();
+  }, []);
+
+  // Handle file upload
+  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setImageSrc(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+  // Process image when source or options change
+  useEffect(() => {
+    if (!cv || !imageSrc || !inputCanvasRef.current || !outputCanvasRef.current) return;
+
+    const img = new Image();
+    img.onload = () => {
+      const inputCanvas = inputCanvasRef.current!;
+      const outputCanvas = outputCanvasRef.current!;
+
+      // Set canvas dimensions
+      inputCanvas.width = img.width;
+      inputCanvas.height = img.height;
+      outputCanvas.width = img.width;
+      outputCanvas.height = img.height;
+
+      // Draw original image
+      const inputCtx = inputCanvas.getContext('2d')!;
+      inputCtx.drawImage(img, 0, 0);
+
+      // Process with OpenCV
+      let src = cv.imread(inputCanvas);
+      let result = src.clone();
+
+      try {
+        // Apply grayscale
+        if (options.grayscale) {
+          const gray = new cv.Mat();
+          cv.cvtColor(result, gray, cv.COLOR_RGBA2GRAY);
+          cv.cvtColor(gray, result, cv.COLOR_GRAY2RGBA);
+          gray.delete();
+        }
+
+        // Apply blur
+        if (options.blur > 0) {
+          const size = options.blur * 2 + 1; // Ensure odd number
+          cv.GaussianBlur(result, result, new cv.Size(size, size), 0);
+        }
+
+        // Apply edge detection
+        if (options.edgeDetection) {
+          const gray = new cv.Mat();
+          const edges = new cv.Mat();
+          cv.cvtColor(result, gray, cv.COLOR_RGBA2GRAY);
+          cv.Canny(gray, edges, 50, 150);
+          cv.cvtColor(edges, result, cv.COLOR_GRAY2RGBA);
+          gray.delete();
+          edges.delete();
+        }
+
+        // Detect and draw contours
+        if (options.contours && !options.edgeDetection) {
+          const gray = new cv.Mat();
+          const edges = new cv.Mat();
+          cv.cvtColor(result, gray, cv.COLOR_RGBA2GRAY);
+          cv.Canny(gray, edges, 50, 150);
+
+          const contours = new cv.MatVector();
+          const hierarchy = new cv.Mat();
+          cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+          cv.drawContours(result, contours, -1, new cv.Scalar(0, 255, 0, 255), 2);
+
+          gray.delete();
+          edges.delete();
+          contours.delete();
+          hierarchy.delete();
+        }
+
+        // Display result
+        cv.imshow(outputCanvas, result);
+
+      } finally {
+        // Clean up
+        src.delete();
+        result.delete();
+      }
+    };
+    img.src = imageSrc;
+  }, [cv, imageSrc, options]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+        <span className="ml-4">Loading OpenCV.js...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 max-w-6xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6">OpenCV.js Image Processor</h1>
+
+      {/* File Upload */}
+      <div className="mb-6">
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleFileUpload}
+          className="block w-full text-sm file:mr-4 file:py-2 file:px-4
+                     file:rounded-full file:border-0 file:bg-blue-500
+                     file:text-white hover:file:bg-blue-600"
+        />
+      </div>
+
+      {/* Processing Options */}
+      <div className="mb-6 p-4 bg-gray-100 rounded-lg">
+        <h2 className="text-xl font-semibold mb-4">Processing Options</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={options.grayscale}
+              onChange={(e) => setOptions({ ...options, grayscale: e.target.checked })}
+              className="mr-2"
+            />
+            Grayscale
+          </label>
+
+          <label className="flex items-center">
+            <span className="mr-2">Blur:</span>
+            <input
+              type="range"
+              min="0"
+              max="10"
+              value={options.blur}
+              onChange={(e) => setOptions({ ...options, blur: parseInt(e.target.value) })}
+              className="w-20"
+            />
+            <span className="ml-2">{options.blur}</span>
+          </label>
+
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={options.edgeDetection}
+              onChange={(e) => setOptions({ ...options, edgeDetection: e.target.checked })}
+              className="mr-2"
+            />
+            Edge Detection
+          </label>
+
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={options.contours}
+              onChange={(e) => setOptions({ ...options, contours: e.target.checked })}
+              className="mr-2"
+            />
+            Show Contours
+          </label>
+        </div>
+      </div>
+
+      {/* Canvas Display */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <div>
+          <h3 className="text-lg font-medium mb-2">Original</h3>
+          <canvas
+            ref={inputCanvasRef}
+            className="border rounded max-w-full h-auto"
+          />
+        </div>
+        <div>
+          <h3 className="text-lg font-medium mb-2">Processed</h3>
+          <canvas
+            ref={outputCanvasRef}
+            className="border rounded max-w-full h-auto"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+## Memory Management
+
+One of the most critical aspects of using OpenCV.js is proper memory management. Unlike JavaScript, OpenCV Mat objects are not garbage collected automatically.
+
+### The Memory Leak Problem
+
+```typescript
+// ❌ BAD: Memory leak!
+function processImage(src: cv.Mat) {
+  const gray = new cv.Mat();
+  const edges = new cv.Mat();
+
+  cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+  cv.Canny(gray, edges, 50, 150);
+
+  return edges;
+  // gray is never deleted - MEMORY LEAK!
+}
+
+// ✅ GOOD: Proper cleanup
+function processImage(src: cv.Mat): cv.Mat {
+  const gray = new cv.Mat();
+  const edges = new cv.Mat();
+
+  try {
+    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+    cv.Canny(gray, edges, 50, 150);
+
+    return edges;
+  } finally {
+    gray.delete(); // Always cleanup intermediate Mats
+  }
+}
+```
+
+### Using a Cleanup Helper
+
+```typescript
+class MatManager {
+  private mats: cv.Mat[] = [];
+
+  create(): cv.Mat {
+    const mat = new cv.Mat();
+    this.mats.push(mat);
+    return mat;
+  }
+
+  track(mat: cv.Mat): cv.Mat {
+    this.mats.push(mat);
+    return mat;
+  }
+
+  untrack(mat: cv.Mat): void {
+    const index = this.mats.indexOf(mat);
+    if (index > -1) {
+      this.mats.splice(index, 1);
+    }
+  }
+
+  cleanup(): void {
+    this.mats.forEach((mat) => {
+      try {
+        mat.delete();
+      } catch (e) {
+        // Mat already deleted
+      }
+    });
+    this.mats = [];
+  }
+}
+
+// Usage
+function processWithManager(src: cv.Mat): cv.Mat {
+  const manager = new MatManager();
+
+  try {
+    const gray = manager.create();
+    const blurred = manager.create();
+    const edges = manager.create();
+
+    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+    cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
+    cv.Canny(blurred, edges, 50, 150);
+
+    // Untrack the result so it won't be deleted
+    manager.untrack(edges);
+
+    return edges;
+  } finally {
+    manager.cleanup();
+  }
+}
+```
+
+## Performance Optimization
+
+### 1. Resize Before Processing
+
+```typescript
+function optimizedProcess(src: cv.Mat, maxDimension: number = 800): cv.Mat {
+  // Downscale for faster processing
+  const scale = Math.min(maxDimension / src.cols, maxDimension / src.rows, 1);
+
+  if (scale < 1) {
+    const resized = new cv.Mat();
+    cv.resize(src, resized, new cv.Size(0, 0), scale, scale, cv.INTER_AREA);
+    return resized;
+  }
+
+  return src.clone();
+}
+```
+
+### 2. Use Web Workers for Heavy Processing
+
+```typescript
+// worker/opencv.worker.ts
+self.onmessage = async (e) => {
+  const { imageData, operation } = e.data;
+
+  // Import OpenCV in worker
+  const cv = await import("@techstark/opencv-js");
+
+  // Wait for WASM
+  await new Promise<void>((resolve) => {
+    if (cv.default.Mat) resolve();
+    else cv.default.onRuntimeInitialized = () => resolve();
+  });
+
+  // Process image
+  const src = cv.default.matFromImageData(imageData);
+  // ... processing logic
+
+  // Return processed data
+  const result = src.data.slice();
+  self.postMessage({ result, width: src.cols, height: src.rows });
+
+  src.delete();
+};
+```
+
+### 3. Debounce Real-time Processing
+
+```typescript
+import { useMemo } from "react";
+import { debounce } from "lodash";
+
+function useProcessImage(cv: any) {
+  return useMemo(
+    () =>
+      debounce((canvas: HTMLCanvasElement, options: ProcessingOptions) => {
+        // Process image with options
+      }, 100),
+    [cv],
+  );
+}
+```
+
+## Real-World Application: Document Scanner
+
+Here's a practical example that detects and extracts documents from images:
+
+```typescript
+// lib/documentScanner.ts
+export class DocumentScanner {
+  private cv: any;
+
+  constructor(cv: any) {
+    this.cv = cv;
+  }
+
+  detectDocument(src: cv.Mat): cv.Point[] | null {
+    const gray = new this.cv.Mat();
+    const blurred = new this.cv.Mat();
+    const edges = new this.cv.Mat();
+
+    try {
+      // Preprocessing
+      this.cv.cvtColor(src, gray, this.cv.COLOR_RGBA2GRAY);
+      this.cv.GaussianBlur(gray, blurred, new this.cv.Size(5, 5), 0);
+      this.cv.Canny(blurred, edges, 75, 200);
+
+      // Dilate to close gaps
+      const kernel = this.cv.Mat.ones(5, 5, this.cv.CV_8U);
+      this.cv.dilate(edges, edges, kernel);
+
+      // Find contours
+      const contours = new this.cv.MatVector();
+      const hierarchy = new this.cv.Mat();
+      this.cv.findContours(
+        edges,
+        contours,
+        hierarchy,
+        this.cv.RETR_EXTERNAL,
+        this.cv.CHAIN_APPROX_SIMPLE,
+      );
+
+      // Find largest quadrilateral
+      let maxArea = 0;
+      let documentContour: cv.Mat | null = null;
+
+      for (let i = 0; i < contours.size(); i++) {
+        const contour = contours.get(i);
+        const peri = this.cv.arcLength(contour, true);
+        const approx = new this.cv.Mat();
+        this.cv.approxPolyDP(contour, approx, 0.02 * peri, true);
+
+        if (approx.rows === 4) {
+          const area = this.cv.contourArea(approx);
+          if (area > maxArea) {
+            maxArea = area;
+            if (documentContour) documentContour.delete();
+            documentContour = approx.clone();
+          }
+        }
+
+        approx.delete();
+      }
+
+      // Extract corner points
+      if (documentContour) {
+        const points: cv.Point[] = [];
+        for (let i = 0; i < 4; i++) {
+          points.push(
+            new this.cv.Point(
+              documentContour.data32S[i * 2],
+              documentContour.data32S[i * 2 + 1],
+            ),
+          );
+        }
+        documentContour.delete();
+        contours.delete();
+        hierarchy.delete();
+        kernel.delete();
+        return points;
+      }
+
+      contours.delete();
+      hierarchy.delete();
+      kernel.delete();
+      return null;
+    } finally {
+      gray.delete();
+      blurred.delete();
+      edges.delete();
+    }
+  }
+
+  warpPerspective(src: cv.Mat, corners: cv.Point[]): cv.Mat {
+    // Order points: top-left, top-right, bottom-right, bottom-left
+    const ordered = this.orderPoints(corners);
+
+    // Calculate output dimensions
+    const width = Math.max(
+      this.distance(ordered[0], ordered[1]),
+      this.distance(ordered[2], ordered[3]),
+    );
+    const height = Math.max(
+      this.distance(ordered[0], ordered[3]),
+      this.distance(ordered[1], ordered[2]),
+    );
+
+    // Create transformation matrix
+    const srcPoints = this.cv.matFromArray(4, 1, this.cv.CV_32FC2, [
+      ordered[0].x,
+      ordered[0].y,
+      ordered[1].x,
+      ordered[1].y,
+      ordered[2].x,
+      ordered[2].y,
+      ordered[3].x,
+      ordered[3].y,
+    ]);
+
+    const dstPoints = this.cv.matFromArray(4, 1, this.cv.CV_32FC2, [
+      0,
+      0,
+      width,
+      0,
+      width,
+      height,
+      0,
+      height,
+    ]);
+
+    const M = this.cv.getPerspectiveTransform(srcPoints, dstPoints);
+    const warped = new this.cv.Mat();
+    this.cv.warpPerspective(src, warped, M, new this.cv.Size(width, height));
+
+    srcPoints.delete();
+    dstPoints.delete();
+    M.delete();
+
+    return warped;
+  }
+
+  private orderPoints(pts: cv.Point[]): cv.Point[] {
+    // Sort by sum (x + y) for top-left and bottom-right
+    const sorted = [...pts].sort((a, b) => a.x + a.y - (b.x + b.y));
+    const topLeft = sorted[0];
+    const bottomRight = sorted[3];
+
+    // Sort by diff (y - x) for top-right and bottom-left
+    const sortedDiff = [...pts].sort((a, b) => a.y - a.x - (b.y - b.x));
+    const topRight = sortedDiff[0];
+    const bottomLeft = sortedDiff[3];
+
+    return [topLeft, topRight, bottomRight, bottomLeft];
+  }
+
+  private distance(p1: cv.Point, p2: cv.Point): number {
+    return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+  }
+}
+```
+
+## Troubleshooting Common Issues
+
+### 1. "cv is not defined"
+
+```typescript
+// ❌ Problem: Accessing cv before it's loaded
+const mat = new cv.Mat();
+
+// ✅ Solution: Always check if loaded
+if (cv && cv.Mat) {
+  const mat = new cv.Mat();
+}
+```
+
+### 2. "Cannot read property 'delete' of undefined"
+
+```typescript
+// ❌ Problem: Deleting already deleted Mat
+mat.delete();
+mat.delete(); // Error!
+
+// ✅ Solution: Set to null after deletion
+mat.delete();
+mat = null;
+```
+
+### 3. Memory Growing Indefinitely
+
+```typescript
+// ❌ Problem: Creating Mats in a loop without cleanup
+function processFrames(frames: cv.Mat[]) {
+  frames.forEach((frame) => {
+    const processed = processFrame(frame);
+    // processed is never deleted!
+  });
+}
+
+// ✅ Solution: Delete after use
+function processFrames(frames: cv.Mat[]) {
+  frames.forEach((frame) => {
+    const processed = processFrame(frame);
+    displayResult(processed);
+    processed.delete();
+  });
+}
+```
+
+### 4. Next.js SSR Errors
+
+```typescript
+// ❌ Problem: Importing at top level
+import cv from "@techstark/opencv-js";
+
+// ✅ Solution: Dynamic import in useEffect
+useEffect(() => {
+  const loadCV = async () => {
+    const opencv = await import("@techstark/opencv-js");
+    setCv(opencv.default);
+  };
+  loadCV();
+}, []);
+```
+
+## Best Practices Summary
+
+1. **Always use dynamic imports** in Next.js to avoid SSR issues
+2. **Delete all Mat objects** when done to prevent memory leaks
+3. **Use try/finally blocks** for guaranteed cleanup
+4. **Resize large images** before processing for better performance
+5. **Use Web Workers** for heavy computations to keep UI responsive
+6. **Check cv.Mat existence** before using to ensure WASM is loaded
+7. **Create a loading state** to show users that OpenCV is initializing
+8. **Debounce real-time processing** to avoid overwhelming the browser
+
+## Conclusion
+
+OpenCV.js brings powerful computer vision capabilities directly to the browser, and with `@techstark/opencv-js`, integrating it into your Next.js applications becomes straightforward. From simple image filters to complex document scanning and object detection, the possibilities are vast.
+
+Remember that client-side computer vision comes with its own challenges — memory management, asynchronous loading, and performance optimization are key areas to master. But with the patterns and practices outlined in this guide, you're well-equipped to build impressive, responsive computer vision applications that run entirely in the user's browser.
+
+Start experimenting with edge detection and contours, then gradually build up to more complex applications. The combination of Next.js's modern React features and OpenCV's robust image processing capabilities opens up a world of creative possibilities.
+
+Happy coding! 🎨📷
