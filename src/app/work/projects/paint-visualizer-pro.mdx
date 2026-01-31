@@ -1,0 +1,81 @@
+---
+title: "Paint Visualizer Pro"
+publishedAt: "2026-01-31"
+summary: "Production-grade architectural paint preview application combining computer vision (OpenCV.js WebAssembly) with Generative AI (Groq/Llama) for real-time paint visualization and intelligent color consulting."
+images:
+  - "/images/projects/paint-visualizer/img-1.png"
+
+team:
+  - name: "Santhosh Kumar"
+    role: "Full-Stack Engineer"
+    avatar: "/images/avatar.png"
+link: "https://paint-visualizer.vercel.app/"
+---
+
+## Overview
+
+Paint Visualizer Pro is an advanced web application that allows users to upload architectural images or select from pre-loaded samples, automatically segment the building into distinct regions (walls, roofs, frames, etc.), and apply paint colors in real-time. The integrated AI Design Consultant analyzes architectural styles and suggests culturally and aesthetically appropriate color palettes.
+
+## Key Features
+
+- **Intelligent Image Segmentation**: Advanced computer vision using OpenCV.js (WebAssembly) with Canny Edge Detection, Sobel Normal Maps, and Connected Component Analysis for precise boundary detection.
+- **Real-Time Paint Application**: Click any region to apply colors instantly with multi-selection mode, blend modes (multiply/overlay), and opacity control.
+- **AI-Powered Color Consulting**: Vision-based architectural analysis using Llama 4 Scout and text-to-palette generation with Llama 3.1 via Groq.
+- **Lighting Simulation**: Normal map-based realistic lighting interactions that simulate 3D surface orientations.
+- **Texture Preservation**: Maintains original surface details under paint for realistic visualization.
+
+## Architecture
+
+**Frontend**: Next.js 16 with React 19, TypeScript, Tailwind CSS 4, and Hero UI components. Framer Motion for animations.
+
+**Computer Vision**: OpenCV.js 4.12 (WebAssembly) handles bilateral filtering, Canny edge detection, Sobel operators for normal map generation, morphological operations, and connected component analysis.
+
+**AI Integration**: Groq SDK for ultra-fast inference. Llama 4 Scout (17B) for vision-based architectural analysis, Llama 3.1 (8B) for creative text-to-palette generation.
+
+**State Management**: Zustand for lightweight, performant global state handling of image sets, region maps, selections, and applied colors.
+
+**Rendering Pipeline**: Three-canvas layer system (base, paint, hit detection) with blend mode algorithms (multiply/overlay) for realistic color application.
+
+## Technical Achievements
+
+- Built pixel-perfect segmentation combining multiple edge detection techniques (Canny + Sobel) with morphological gap healing.
+- Implemented real-time flood fill and connected component analysis processing 2400×1600 images in under 2 seconds.
+- Designed AI prompt engineering for architectural color consulting with structured JSON responses.
+- Created interactive region hover detection using invisible hit-testing canvas with unique color encoding.
+- Achieved texture-preserving paint application using blend modes that maintain original surface details.
+
+## Image Processing Pipeline
+
+1. **Bilateral Filtering**: Smooths textures while preserving structural edges (d=9, sigmaColor=75, sigmaSpace=75).
+2. **Edge Detection**: Canny edge detection (thresholds: 30, 100) combined with Sobel-derived edges from normal maps.
+3. **Gap Healing**: Morphological dilation eliminates gaps for seamless region boundaries.
+4. **Segmentation**: Connected Component Analysis identifies unique paint-able regions.
+5. **Region Analysis**: Calculates pixel count, bounding boxes, centroids, and average normal vectors.
+
+## AI Integration Details
+
+**Vision Analysis Flow**:
+
+- User uploads or selects an architectural image
+- AI analyzes building style (Modern, Victorian, Craftsman, etc.)
+- Considers existing features (roof color, stonework, materials)
+- Generates 5-color palette with creative names and reasoning
+
+**Text-to-Palette Flow**:
+
+- User describes desired aesthetic ("Sunset over Tuscany", "Modern Scandinavian minimalism")
+- AI interprets description and generates cohesive color scheme
+- Colors include names like "Coastal Mist" or "Terracotta Dream"
+
+## Tech Stack
+
+- **Framework**: Next.js 16, React 19, TypeScript 5
+- **Styling**: Tailwind CSS 4, Hero UI, Framer Motion
+- **Computer Vision**: OpenCV.js 4.12 (WebAssembly)
+- **AI**: Groq SDK, Llama 4 Scout, Llama 3.1
+- **State**: Zustand
+- **Icons**: Lucide React
+
+## Outcome
+
+The application enables architects, designers, and homeowners to visualize building paint schemes before committing to a color. The combination of precise computer vision segmentation with AI-powered color consulting provides a unique tool for architectural visualization. The system handles complex multi-region buildings with real-time performance, processing user interactions at 60fps while maintaining paint texture fidelity.
